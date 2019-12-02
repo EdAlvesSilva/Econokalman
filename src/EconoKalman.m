@@ -1,5 +1,5 @@
 clear;
-cpi_data = load('allitems.CSV',';');
+cpi_data = load('../data/allitems.CSV',';');
 cpi_data = reshape(cpi_data',1,size(cpi_data,1)*size(cpi_data,2));
 cpi_data = cpi_data';
 inflation_data = zeros(length(cpi_data),1);
