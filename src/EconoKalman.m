@@ -1,4 +1,5 @@
 clear;
+close all;
 cpi_data = load('../data/allitems.CSV',';');
 cpi_data = reshape(cpi_data',1,size(cpi_data,1)*size(cpi_data,2));
 cpi_data = cpi_data';
@@ -14,10 +15,8 @@ end
 
 p = 2;
 
-
-%train_test_split_ratio = 0.1;
-%split = floor(length(inflation_data)*train_test_split_ratio);
-split = 30;
+train_test_split_ratio = 0.1;
+split = floor(length(inflation_data)*train_test_split_ratio);
 
 train_data = inflation_data(1:split);
 test_data = inflation_data(split+1:end);
@@ -34,12 +33,11 @@ for i = 1:1:p
 end
 
 
-sigma = err;
+
 stationary_window_length = 30;
-A = [(a(2:end))'; horzcat(eye(p-1),zeros(p-1,1))];
+A = [(-a(2:end))'; horzcat(eye(p-1),zeros(p-1,1))];
 C = ones(1,p);
 x_record = zeros(length(train_data),1);
-x_record_predict = zeros(length(train_data),1);
 samples = zeros(stationary_window_length,1);
 for n = 1:1:length(test_data)-p+1
     if n == 1
@@ -47,13 +45,12 @@ for n = 1:1:length(test_data)-p+1
     else 
         x_record(n) = x(1);
         x = A*x;
-        x_record_predict(n) = x(1);
-        P = A*P*A' + eye(p)*sigma;
+        P = A*P*A' + eye(p)*err;
         K = P*C'*inv(C*P*C');
         y = C*test_data(n:n+p-1);
         if rem(n,stationary_window_length) == 0
             [a,err] = covm(samples,p);
-            A = [((a(2:end))'); horzcat(eye(p-1),zeros(p-1,1))];
+            A = [(-(a(2:end))'); horzcat(eye(p-1),zeros(p-1,1))];
         else
             samples(rem(n,stationary_window_length)) = y(1);
         end
@@ -64,9 +61,10 @@ end
 
 hold on;
 plot(test_data);
-plot(-x_record_predict);
 plot(x_record);
-legend(["Real data" "Initial Prediction" "Final Precition"])
+legend(["Real data" "Final Precition"])
 
-corrcoef(x_record(stationary_window_length:end),test_data(stationary_window_length:end-p+1))
-corrcoef(x_record_predict(stationary_window_length:end),test_data(stationary_window_length:end-p+1))
+disp("MSE: ")
+immse(x_record(stationary_window_length:end),test_data(stationary_window_length:end-p+1))
+
+%yline(immse(x_record(stationary_window_length:end),test_data(stationary_window_length:end-p+1)));
